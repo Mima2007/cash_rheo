@@ -4,6 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
+import '../services/receipt_service.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -106,6 +107,23 @@ class _QRScanPageState extends State<QRScanPage> {
       _loading = false;
     });
     _controller?.start();
+  }
+
+  Future<void> _saveReceipts() async {
+    setState(() => _loading = true);
+    try {
+      await ReceiptService.saveReceipts(_receipts);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_receipts.length} racuna sacuvano!'), backgroundColor: const Color(0xFF6FDDCE)));
+        context.go('/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Greska: $e'), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -317,7 +335,10 @@ class _QRScanPageState extends State<QRScanPage> {
                               ),
                               if (qrUrl.isNotEmpty) ...[
                                 const SizedBox(height: 16),
-                                QrImageView(data: qrUrl, version: QrVersions.auto, size: 180, backgroundColor: Colors.white),
+                                LayoutBuilder(builder: (context, constraints) {
+                                  final qrSize = constraints.maxWidth * 0.80;
+                                  return Center(child: SizedBox(width: qrSize, height: qrSize, child: QrImageView(data: qrUrl, version: QrVersions.auto, size: qrSize, backgroundColor: Colors.white)));
+                                }),
                                 const SizedBox(height: 16),
                               ],
                               if (krajLine.isNotEmpty)
@@ -352,12 +373,9 @@ class _QRScanPageState extends State<QRScanPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_receipts.length} racuna sacuvano!')));
-                      context.go('/home');
-                    },
-                    icon: const Icon(Icons.send),
-                    label: const Text('POSALJI'),
+                    onPressed: _loading ? null : _saveReceipts,
+                    icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send),
+                    label: Text(_loading ? 'CUVAM...' : 'POSALJI'),
                     style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   ),
                 ),
