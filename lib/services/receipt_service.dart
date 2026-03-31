@@ -51,7 +51,7 @@ class ReceiptService {
         try {
           pdfUrl = await PdfService.generateAndUpload(receipt);
         } catch (e) {
-          // PDF nije kritičan, nastavi čuvanje
+          print("PDF GRESKA: $e"); rethrow;
         }
 
         final insertedReceipt = await supabase.from('receipts').insert({
