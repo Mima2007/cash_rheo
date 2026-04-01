@@ -2,24 +2,36 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image/image.dart' as img;
 
 final supabase = Supabase.instance.client;
 
 class DocumentService {
-  static Future<String> scanAndUpload(Uint8List imageBytes, int width, int height) async {
+  static Future<String> scanAndUpload(Uint8List imageBytes) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('Niste prijavljeni');
 
-    final base64Image = base64Encode(imageBytes);
+    // Smanji sliku na max 1200px
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) throw Exception('Ne mogu da procitam sliku');
+    
+    img.Image resized;
+    if (decoded.width > 1200 || decoded.height > 1200) {
+      resized = img.copyResize(decoded, width: decoded.width > decoded.height ? 1200 : -1, height: decoded.height >= decoded.width ? 1200 : -1);
+    } else {
+      resized = decoded;
+    }
+    
+    final compressed = img.encodeJpg(resized, quality: 75);
+    final base64Image = base64Encode(compressed);
 
-    // Posalji na Vercel scan-document endpoint
     final response = await http.post(
       Uri.parse('https://cash-rheo.vercel.app/api/scan-document'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'image': 'data:image/jpeg;base64,$base64Image',
-        'width': width,
-        'height': height,
+        'width': resized.width,
+        'height': resized.height,
       }),
     ).timeout(const Duration(seconds: 40));
 
@@ -31,8 +43,7 @@ class DocumentService {
     final fileName = '$userId/${DateTime.now().millisecondsSinceEpoch}.pdf';
 
     await supabase.storage.from('documents').uploadBinary(
-      fileName,
-      pdfBytes,
+      fileName, pdfBytes,
       fileOptions: const FileOptions(contentType: 'application/pdf', upsert: true),
     );
 
