@@ -69,6 +69,7 @@ flutter:
     - assets/logo.png
     - assets/fonts/RobotoMono-Regular.ttf
     - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/DejaVuSansMono.ttf
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
@@ -102,4 +103,9 @@ flutter:
     - family: RobotoMono
       fonts:
         - asset: assets/fonts/RobotoMono-Regular.ttf
+    - family: DejaVuSansMono
+      fonts:
+        - asset: assets/fonts/DejaVuSansMono.ttf
+    - family: NotoSans
+      fonts:
         - asset: assets/fonts/NotoSans-Regular.ttf
