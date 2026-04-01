@@ -1,0 +1,12 @@
+{
+  "name": "cash-rheo",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "jimp": "^0.22.12",
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.15.0",
+    "qrcode": "^1.5.4"
+  }
+}
