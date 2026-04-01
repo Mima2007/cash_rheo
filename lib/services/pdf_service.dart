@@ -14,7 +14,7 @@ class PdfService {
     late Uint8List pdfBytes;
     try {
       final response = await http.post(
-        Uri.parse('https://racun-skener.vercel.app/api/generate-pdf'),
+        Uri.parse('https://cash-rheo.vercel.app/api/generate-pdf'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'journal': journal, 'qrUrl': qrUrl}),
       );
