@@ -1,8 +1,8 @@
 {
-  "version": 2,
   "functions": {
-    "api/generate-pdf.js": { "includeFiles": "api/fonts/**" },
-    "api/scan-document.js": { "maxDuration": 30 }
-  },
-  "rewrites": [{ "source": "/api/:path*", "destination": "/api/:path*" }]
+    "api/process-document.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
 }
