@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
     if (!image || !width || !height) return res.status(400).json({ error: "Missing image, width, or height" });
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are a precision document edge detector. Find the four corners of the physical paper/document in this image.
 

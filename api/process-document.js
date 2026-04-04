@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
 
     // Step 1: Gemini detects document corners
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Resize for AI (max 1024px)
     const scale = Math.min(1, 1024 / Math.max(w, h));
