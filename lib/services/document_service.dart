@@ -1,55 +1,47 @@
-import 'dart:convert';
 import 'dart:typed_data';
-import 'package:http/http.dart' as http;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:image/image.dart' as img;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final _supabase = Supabase.instance.client;
 
 class DocumentService {
-  static const _baseUrl = 'https://cash-rheo.vercel.app';
-
-  /// Full auto: send photo → get clean PDF back → upload to Supabase
-  static Future<String> scanAndUpload(Uint8List imageBytes) async {
+  /// Upload scanned image directly as PDF to Supabase — no server needed
+  static Future<String> uploadDirect(Uint8List imageBytes) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('Niste prijavljeni');
 
-    // Compress for upload (max 2048px, quality 85)
+    // Get image dimensions
     final decoded = img.decodeImage(imageBytes);
-    if (decoded == null) throw Exception('Ne mogu da procitam sliku');
+    if (decoded == null) throw Exception('Ne mogu da pročitam sliku');
 
-    img.Image sized = decoded;
-    final longest = decoded.width > decoded.height ? decoded.width : decoded.height;
-    if (longest > 2048) {
-      if (decoded.width > decoded.height) {
-        sized = img.copyResize(decoded, width: 2048);
-      } else {
-        sized = img.copyResize(decoded, height: 2048);
-      }
-    }
+    // Create PDF with image filling the page
+    final w = decoded.width.toDouble();
+    final h = decoded.height.toDouble();
 
-    final compressed = img.encodeJpg(sized, quality: 85);
-    final base64Image = base64Encode(compressed);
+    // Scale to A4-ish proportions (72 DPI points)
+    final scale = 595.0 / w; // A4 width in points
+    final pageW = 595.0;
+    final pageH = h * scale;
 
-    // Send to Vercel — returns PDF directly
-    final response = await http.post(
-      Uri.parse('$_baseUrl/api/process-document'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'image': base64Image}),
-    ).timeout(const Duration(seconds: 45));
+    final pdf = pw.Document();
+    final image = pw.MemoryImage(imageBytes);
 
-    if (response.statusCode != 200) {
-      final errorMsg = response.headers['content-type']?.contains('json') == true
-          ? json.decode(response.body)['error'] ?? 'Greska'
-          : 'Server greska: ${response.statusCode}';
-      throw Exception(errorMsg);
-    }
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(pageW, pageH, marginAll: 0),
+        build: (context) => pw.Center(
+          child: pw.Image(image, width: pageW, height: pageH, fit: pw.BoxFit.fill),
+        ),
+      ),
+    );
 
-    final pdfBytes = response.bodyBytes;
+    final pdfBytes = await pdf.save();
     final fileName = '$userId/${DateTime.now().millisecondsSinceEpoch}.pdf';
 
     await _supabase.storage.from('documents').uploadBinary(
-      fileName, pdfBytes,
+      fileName, Uint8List.fromList(pdfBytes),
       fileOptions: const FileOptions(contentType: 'application/pdf', upsert: true),
     );
 
@@ -65,4 +57,7 @@ class DocumentService {
 
     return pdfUrl;
   }
+
+  /// Legacy compat
+  static Future<String> scanAndUpload(Uint8List imageBytes) => uploadDirect(imageBytes);
 }
