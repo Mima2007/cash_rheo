@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 function findFont() {
   const candidates = [
-    path.join(process.cwd(), 'api', 'fonts', 'DejaVuSansMono.ttf'),
-    '/var/task/api/fonts/DejaVuSansMono.ttf',
-    '/vercel/path0/api/fonts/DejaVuSansMono.ttf',
+    path.join(process.cwd(), 'api', 'fonts', 'RobotoMono-Regular.ttf'),
+    '/var/task/api/fonts/RobotoMono-Regular.ttf',
+    '/vercel/path0/api/fonts/RobotoMono-Regular.ttf',
   ];
   for (const p of candidates) {
     try { if (fs.existsSync(p) && fs.statSync(p).size > 10000) return p; } catch {}
