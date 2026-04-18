@@ -1,23 +1,37 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
 function findFont() {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
+    path.join(__dirname, 'fonts', 'RobotoMono-Regular.ttf'),
+    path.join(__dirname, 'fonts', 'DejaVuSansMono.ttf'),
     path.join(process.cwd(), 'api', 'fonts', 'RobotoMono-Regular.ttf'),
+    path.join(process.cwd(), 'api', 'fonts', 'DejaVuSansMono.ttf'),
     '/var/task/api/fonts/RobotoMono-Regular.ttf',
-    '/vercel/path0/api/fonts/RobotoMono-Regular.ttf',
+    '/var/task/api/fonts/DejaVuSansMono.ttf',
   ];
   for (const p of candidates) {
-    try { if (fs.existsSync(p) && fs.statSync(p).size > 10000) return p; } catch {}
+    try {
+      if (fs.existsSync(p) && fs.statSync(p).size > 10000) {
+        const buf = fs.readFileSync(p);
+        const head = buf.toString('ascii', 0, 4);
+        if (head === '\x00\x01\x00\x00' || head === 'true' || head === 'OTTO') return p;
+      }
+    } catch {}
   }
   return null;
 }
+
 async function makeQrPng(text) {
   try {
     const QRCode = await import('qrcode');
     return await QRCode.default.toBuffer(text, { type: 'png', width: 600, margin: 1, errorCorrectionLevel: 'M' });
   } catch (e) { return null; }
 }
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -27,7 +41,6 @@ export default async function handler(req, res) {
   if (!journal) return res.status(400).json({ error: 'Journal tekst je obavezan' });
   try {
     const fontPath = findFont();
-    const hasFont = !!fontPath;
     const ptPerMm = 72 / 25.4;
     const W = Math.round(78 * ptPerMm);
     const ML = 6; const MR = 3; const MT = 8;
@@ -40,7 +53,7 @@ export default async function handler(req, res) {
     const mainBody = footerIdx >= 0 ? allLines.slice(0, footerIdx) : allLines;
     const krajLine = footerIdx >= 0 ? allLines[footerIdx] : '';
     const measure = new PDFDocument({ size: [W, 10000], margins: { top: MT, bottom: MT, left: ML, right: MR } });
-    if (hasFont) { measure.registerFont('Mono', fontPath); measure.font('Mono'); }
+    if (fontPath) { measure.registerFont('Mono', fontPath); measure.font('Mono'); }
     else { measure.font('Courier'); }
     measure.fontSize(FS);
     let currentY = MT;
@@ -51,7 +64,7 @@ export default async function handler(req, res) {
     const finalHeight = currentY + MT;
     measure.end();
     const doc = new PDFDocument({ size: [W, finalHeight], margins: { top: MT, bottom: MT, left: ML, right: MR } });
-    if (hasFont) { doc.registerFont('Mono', fontPath); doc.font('Mono'); }
+    if (fontPath) { doc.registerFont('Mono', fontPath); doc.font('Mono'); }
     else { doc.font('Courier'); }
     doc.fontSize(FS);
     mainBody.forEach(line => { doc.text(line, ML, doc.y, { width: TW, align: 'left', lineGap: LG }); });
@@ -71,6 +84,6 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/pdf');
     return res.status(200).send(Buffer.concat(chunks));
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message, stack: e.stack });
   }
 }
