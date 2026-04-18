@@ -7,6 +7,7 @@ import 'pages/home_page.dart';
 import 'pages/qr_scan_page.dart';
 import 'pages/document_scan_page.dart';
 import 'pages/register_page.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,7 @@ void main() async {
     url: 'https://vxjrctfjezzmgcrbhvwb.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4anJjdGZqZXp6bWdjcmJodndiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTA0OTcsImV4cCI6MjA4OTY2NjQ5N30.EUZtud0jrOAyiaDvQ4PST0y08aO-q0a3mwvrAVNrZzo',
   );
+  await AuthService.loadSavedSession();
   runApp(const CashRheoApp());
 }
 
@@ -21,16 +23,17 @@ final supabase = Supabase.instance.client;
 
 class CashRheoApp extends StatelessWidget {
   const CashRheoApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     final router = GoRouter(
       initialLocation: '/login',
       redirect: (context, state) {
-        final session = supabase.auth.currentSession;
+        final supabaseSession = supabase.auth.currentSession;
+        final googleSession = AuthService.userEmail != null;
+        final isLoggedIn = supabaseSession != null || googleSession;
         final isLogin = state.matchedLocation == '/login' || state.matchedLocation == '/register';
-        if (session == null && !isLogin) return '/login';
-        if (session != null && isLogin) return '/home';
+        if (!isLoggedIn && !isLogin) return '/login';
+        if (isLoggedIn && isLogin) return '/home';
         return null;
       },
       routes: [
@@ -41,7 +44,6 @@ class CashRheoApp extends StatelessWidget {
         GoRoute(path: '/document-scan', builder: (c, s) => const DocumentScanPage()),
       ],
     );
-
     return MaterialApp.router(
       title: 'Cash Rheo',
       debugShowCheckedModeBanner: false,

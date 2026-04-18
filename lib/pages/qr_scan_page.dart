@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/receipt_service.dart';
+import '../services/pdf_service.dart';
+import '../services/auth_service.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -112,9 +114,16 @@ class _QRScanPageState extends State<QRScanPage> {
   Future<void> _saveReceipts() async {
     setState(() => _loading = true);
     try {
-      await ReceiptService.saveReceipts(_receipts);
+      if (AuthService.isB2C) {
+        await PdfService.shareViaMail(_receipts, AuthService.userEmail ?? '');
+      } else {
+        await ReceiptService.saveReceipts(_receipts);
+      }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_receipts.length} racuna sacuvano!'), backgroundColor: const Color(0xFF6FDDCE)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AuthService.isB2C ? 'Pripremljeno za slanje!' : '${_receipts.length} racuna sacuvano!'),
+          backgroundColor: const Color(0xFF6FDDCE),
+        ));
         context.go('/home');
       }
     } catch (e) {
@@ -180,7 +189,7 @@ class _QRScanPageState extends State<QRScanPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                GestureDetector(
+                if (!AuthService.isB2C) GestureDetector(
                   onTap: () => setState(() => _serialMode = !_serialMode),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -293,7 +302,6 @@ class _QRScanPageState extends State<QRScanPage> {
                 final isValid = receipt['isValid'] as bool? ?? false;
                 final invoiceResult = receipt['invoiceResult'] as Map<String, dynamic>?;
                 final pfrNumber = invoiceResult?['invoiceNumber'] ?? '';
-
                 final lines = journal.split('\n');
                 int krajIndex = -1;
                 for (int i = lines.length - 1; i >= 0; i--) {
@@ -304,7 +312,6 @@ class _QRScanPageState extends State<QRScanPage> {
                 }
                 final beforeKraj = krajIndex >= 0 ? lines.sublist(0, krajIndex).join('\n') : journal;
                 final krajLine = krajIndex >= 0 ? lines[krajIndex] : '';
-
                 return Column(
                   children: [
                     Container(
@@ -375,7 +382,7 @@ class _QRScanPageState extends State<QRScanPage> {
                   child: ElevatedButton.icon(
                     onPressed: _loading ? null : _saveReceipts,
                     icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send),
-                    label: Text(_loading ? 'CUVAM...' : 'POSALJI'),
+                    label: Text(_loading ? 'PRIPREMAM...' : 'POSALJI'),
                     style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   ),
                 ),
@@ -397,7 +404,6 @@ class _QRScanPageState extends State<QRScanPage> {
 class _ScanOverlayPainter extends CustomPainter {
   final double scanArea;
   _ScanOverlayPainter({required this.scanArea});
-
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.black.withOpacity(0.6);
@@ -412,7 +418,6 @@ class _ScanOverlayPainter extends CustomPainter {
       paint,
     );
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart';
+import '../services/auth_service.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +24,14 @@ class HomePage extends StatelessWidget {
                   child: Image.asset('assets/logo.png', height: 200),
                 ),
               ),
+              if (AuthService.userEmail != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    AuthService.userEmail!,
+                    style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  ),
+                ),
               const Spacer(),
               _buildButton(context, Icons.qr_code_scanner, 'SKENIRAJ QR', 'Fiskalni racun', () => context.go('/qr-scan')),
               const SizedBox(height: 16),
@@ -31,7 +39,11 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 40),
               TextButton.icon(
                 onPressed: () async {
-                  await supabase.auth.signOut();
+                  if (AuthService.isB2C) {
+                    await AuthService.signOut();
+                  } else {
+                    await supabase.auth.signOut();
+                  }
                   if (context.mounted) context.go('/login');
                 },
                 icon: Icon(Icons.logout, color: Colors.grey[600]),

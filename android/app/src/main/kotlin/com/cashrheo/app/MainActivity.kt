@@ -1,4 +1,4 @@
-package com.example.cash_rheo
+package com.cashrheo.app
 
 import io.flutter.embedding.android.FlutterActivity
 
