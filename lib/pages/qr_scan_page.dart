@@ -121,7 +121,7 @@ class _QRScanPageState extends State<QRScanPage> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AuthService.isB2C ? 'Pripremljeno za slanje!' : '${_receipts.length} racuna sacuvano!'),
+          content: Text(AuthService.isB2C ? 'Poslato' : '${_receipts.length} racuna sacuvano!'),
           backgroundColor: const Color(0xFF6FDDCE),
         ));
         context.go('/home');

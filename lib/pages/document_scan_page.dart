@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import '../services/document_service.dart';
+import '../services/auth_service.dart';
 
 class DocumentScanPage extends StatefulWidget {
   const DocumentScanPage({super.key});
@@ -42,7 +43,7 @@ class _DocumentScanPageState extends State<DocumentScanPage> {
 
       for (final path in images) {
         final bytes = await File(path).readAsBytes();
-        await DocumentService.uploadDirect(bytes);
+        if (AuthService.isB2C) { await DocumentService.shareViaMail(bytes, AuthService.userEmail ?? ""); } else { await DocumentService.uploadDirect(bytes); }
       }
 
       setState(() { _processing = false; _done = true; });
@@ -92,7 +93,7 @@ class _DocumentScanPageState extends State<DocumentScanPage> {
             children: [
               const Icon(Icons.check_circle, color: Color(0xFF6FDDCE), size: 80),
               const SizedBox(height: 16),
-              const Text('Sačuvano!', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(AuthService.isB2C ? 'Poslato' : 'Sačuvano!', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 40),
               GestureDetector(
                 onTap: _scan,

@@ -35,7 +35,7 @@ class HomePage extends StatelessWidget {
               const Spacer(),
               _buildButton(context, Icons.qr_code_scanner, 'SKENIRAJ QR', 'Fiskalni racun', () => context.go('/qr-scan')),
               const SizedBox(height: 16),
-              _buildButton(context, Icons.camera_alt_outlined, 'USLIKAJ', 'Ugovor, otpremnica...', () => context.go('/document-scan')),
+              _buildButton(context, Icons.camera_alt_outlined, 'USLIKAJ', '', () => context.go('/document-scan')),
               const SizedBox(height: 40),
               TextButton.icon(
                 onPressed: () async {

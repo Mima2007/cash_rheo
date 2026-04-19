@@ -42,7 +42,8 @@ dependencies:
   http: ^1.6.0
   qr_flutter: ^4.1.0
   pdf: ^3.12.0
-  cunning_document_scanner: ^1.4.0
+  cunning_document_scanner:
+    path: packages/cunning_document_scanner
   image: ^4.8.0
   shared_preferences: ^2.5.5
   google_sign_in: ^6.2.1

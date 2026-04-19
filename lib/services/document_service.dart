@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:image/image.dart' as img;
@@ -58,6 +61,65 @@ class DocumentService {
     return pdfUrl;
   }
 
+
+  /// B2C — generiše PDF lokalno i otvara share sheet (mail, WhatsApp, itd.)
+  static Future<void> shareViaMail(Uint8List imageBytes, String userEmail) async {
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) throw Exception('Ne mogu da pročitam sliku');
+
+    final w = decoded.width.toDouble();
+    final h = decoded.height.toDouble();
+    final scale = 595.0 / w;
+    final pageW = 595.0;
+    final pageH = h * scale;
+
+    final pdf = pw.Document();
+    final image = pw.MemoryImage(imageBytes);
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(pageW, pageH, marginAll: 0),
+        build: (context) => pw.Center(
+          child: pw.Image(image, width: pageW, height: pageH, fit: pw.BoxFit.fill),
+        ),
+      ),
+    );
+
+    final pdfBytes = await pdf.save();
+
+    // Sačuvaj u privremeni folder
+    final tempDir = await getTemporaryDirectory();
+    final fileName = 'dokument_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(pdfBytes);
+
+    // Otvori share sheet
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      subject: 'Skenirani dokument',
+      text: 'Dokument skeniran u Cash Rheo aplikaciji',
+    );
+  }
+
   /// Legacy compat
-  static Future<String> scanAndUpload(Uint8List imageBytes) => uploadDirect(imageBytes);
+
+  /// Obradi skeniranu sliku — približno kao Google Auto filter
+  /// Osvetli belu pozadinu + povećaj kontrast teksta
+  static Uint8List _enhanceDocument(Uint8List imageBytes) {
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) return imageBytes;
+
+    // Povećaj osvetljenje i kontrast
+    var processed = img.adjustColor(
+      decoded,
+      brightness: 1.15,
+      contrast: 1.25,
+      saturation: 0.7,
+    );
+
+    // Blago izoštri
+    processed = img.gaussianBlur(processed, radius: 0);
+
+    return Uint8List.fromList(img.encodeJpg(processed, quality: 88));
+  }
 }
