@@ -1,26 +1,18 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 function findFont() {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.join(__dirname, 'fonts', 'RobotoMono-Regular.ttf'),
-    path.join(__dirname, 'fonts', 'DejaVuSansMono.ttf'),
     path.join(process.cwd(), 'api', 'fonts', 'RobotoMono-Regular.ttf'),
     path.join(process.cwd(), 'api', 'fonts', 'DejaVuSansMono.ttf'),
     '/var/task/api/fonts/RobotoMono-Regular.ttf',
     '/var/task/api/fonts/DejaVuSansMono.ttf',
+    '/vercel/path0/api/fonts/RobotoMono-Regular.ttf',
+    '/vercel/path0/api/fonts/DejaVuSansMono.ttf',
   ];
   for (const p of candidates) {
-    try {
-      if (fs.existsSync(p) && fs.statSync(p).size > 10000) {
-        const buf = fs.readFileSync(p);
-        const head = buf.toString('ascii', 0, 4);
-        if (head === '\x00\x01\x00\x00' || head === 'true' || head === 'OTTO') return p;
-      }
-    } catch {}
+    try { if (fs.existsSync(p) && fs.statSync(p).size > 10000) return p; } catch {}
   }
   return null;
 }
@@ -84,6 +76,6 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/pdf');
     return res.status(200).send(Buffer.concat(chunks));
   } catch (e) {
-    return res.status(500).json({ error: e.message, stack: e.stack });
+    return res.status(500).json({ error: e.message });
   }
 }
