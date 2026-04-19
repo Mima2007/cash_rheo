@@ -4,10 +4,13 @@ import path from 'path';
 
 function findFont() {
   const candidates = [
+    path.join(process.cwd(), 'api', 'fonts', 'NotoSansMono.ttf'),
     path.join(process.cwd(), 'api', 'fonts', 'RobotoMono-Regular.ttf'),
     path.join(process.cwd(), 'api', 'fonts', 'DejaVuSansMono.ttf'),
+    '/var/task/api/fonts/NotoSansMono.ttf',
     '/var/task/api/fonts/RobotoMono-Regular.ttf',
     '/var/task/api/fonts/DejaVuSansMono.ttf',
+    '/vercel/path0/api/fonts/NotoSansMono.ttf',
     '/vercel/path0/api/fonts/RobotoMono-Regular.ttf',
     '/vercel/path0/api/fonts/DejaVuSansMono.ttf',
   ];
@@ -45,7 +48,7 @@ export default async function handler(req, res) {
     const mainBody = footerIdx >= 0 ? allLines.slice(0, footerIdx) : allLines;
     const krajLine = footerIdx >= 0 ? allLines[footerIdx] : '';
     const measure = new PDFDocument({ size: [W, 10000], margins: { top: MT, bottom: MT, left: ML, right: MR } });
-    if (false && fontPath) { measure.registerFont('Mono', fontPath); measure.font('Mono'); }
+    if (fontPath) { measure.registerFont('Mono', fontPath); measure.font('Mono'); }
     else { measure.font('Courier'); }
     measure.fontSize(FS);
     let currentY = MT;
@@ -56,7 +59,7 @@ export default async function handler(req, res) {
     const finalHeight = currentY + MT;
     measure.end();
     const doc = new PDFDocument({ size: [W, finalHeight], margins: { top: MT, bottom: MT, left: ML, right: MR } });
-    if (false && fontPath) { doc.registerFont('Mono', fontPath); doc.font('Mono'); }
+    if (fontPath) { doc.registerFont('Mono', fontPath); doc.font('Mono'); }
     else { doc.font('Courier'); }
     doc.fontSize(FS);
     mainBody.forEach(line => { doc.text(line, ML, doc.y, { width: TW, align: 'left', lineGap: LG }); });
