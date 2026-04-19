@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     const mainBody = footerIdx >= 0 ? allLines.slice(0, footerIdx) : allLines;
     const krajLine = footerIdx >= 0 ? allLines[footerIdx] : '';
     const measure = new PDFDocument({ size: [W, 10000], margins: { top: MT, bottom: MT, left: ML, right: MR } });
-    if (fontPath) { measure.registerFont('Mono', fontPath); measure.font('Mono'); }
+    if (false && fontPath) { measure.registerFont('Mono', fontPath); measure.font('Mono'); }
     else { measure.font('Courier'); }
     measure.fontSize(FS);
     let currentY = MT;
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     const finalHeight = currentY + MT;
     measure.end();
     const doc = new PDFDocument({ size: [W, finalHeight], margins: { top: MT, bottom: MT, left: ML, right: MR } });
-    if (fontPath) { doc.registerFont('Mono', fontPath); doc.font('Mono'); }
+    if (false && fontPath) { doc.registerFont('Mono', fontPath); doc.font('Mono'); }
     else { doc.font('Courier'); }
     doc.fontSize(FS);
     mainBody.forEach(line => { doc.text(line, ML, doc.y, { width: TW, align: 'left', lineGap: LG }); });
