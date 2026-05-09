@@ -73,17 +73,6 @@ export default async function handler(req, res) {
       }
     }
     if (krajLine) { doc.text(krajLine, ML, doc.y, { width: TW, align: 'center', lineGap: LG }); }
-    // Cash Rheo brand ikonica — dole desno
-    try {
-      const iconPath = path.join(process.cwd(), 'api', 'branding', 'cash_rheo_icon.png');
-      if (fs.existsSync(iconPath)) {
-        const iconSize = 22;
-        const iconX = W - MR - iconSize;
-        const iconY = doc.y + 4;
-        doc.image(iconPath, iconX, iconY, { width: iconSize });
-        doc.y = iconY + iconSize;
-      }
-    } catch (e) { /* tiho prelazi ako nešto ne valja sa ikonicom */ }
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     await new Promise((ok, fail) => { doc.on('end', ok); doc.on('error', fail); doc.end(); });
